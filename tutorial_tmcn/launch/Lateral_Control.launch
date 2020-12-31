@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <node name="CreateGlobalPathv4" pkg="tutorial_tmcn" type="CreateGlobalPathv4.py" output="screen" />
+  <node name="StanleyControlv3" pkg="tutorial_tmcn" type="StanleyControl_Lateral.py" output="screen" />
+  <node name="set_long_vel" pkg="tutorial_tmcn" type="set_long_vel.py" output="screen" />
+
+</launch>
+
+
+
+
+
+
+
+

@@ -1,0 +1,9 @@
+float32[] goal_state_vehicle_framex
+float32[] goal_state_vehicle_framey
+float32[] goal_state_vehicle_frametheta
+float32[] goal_state_global_framex
+float32[] goal_state_global_framey
+float32[] goal_state_global_frametheta
+float32 theta
+float32 x
+float32 y

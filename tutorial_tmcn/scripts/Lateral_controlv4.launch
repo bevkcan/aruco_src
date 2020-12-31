@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <node name="CreateGlobalPathv4" pkg="tutorial_tmcn" type="CreateGlobalPathv4.py" output="screen" />
+  <node name="goalStatev2" pkg="tutorial_tmcn" type="goalStatev2.py" output="screen" />
+  <node name="PlanPath" pkg="tutorial_tmcn" type="PlanPathv2.py" output="screen" />	
+  <node name="TransformedGoalStatev3" pkg="tutorial_tmcn" type="TransformedGoalStatev3.py" output="screen" />
+  <node name="set_long_vel" pkg="tutorial_tmcn" type="set_long_vel.py" output="screen" />
+  <node name="DisplayData" pkg="tutorial_tmcn" type="DisplayData.py" output="screen" />
+  <node name="StanleyControl" pkg="tutorial_tmcn" type="StanleyControlv2.py" output="screen" />
+
+</launch>
+
+
+
+
+
+
+
+
