@@ -8,19 +8,15 @@ import os
 import math
 
 
-
-
 import sys,time
 
 from scipy.ndimage import filters
 
 import roslib
 import rospy
-from rospy import Time
 
 from sensor_msgs.msg import CompressedImage
 from geometry_msgs.msg import Pose
-from std_msgs.msg import Float32
 
 wdir = os.getcwd()
 wdir=wdir+"/aruco_recognition/src/test_pub_sub/src"
@@ -29,11 +25,10 @@ print(wdir)
 
 
 VERBOSE = True
-np.set_printoptions(precision=4,suppress=True)
 
 class arucoPubSub:
 
-    
+    np.set_printoptions(precision=4,suppress=True)
     markermap = pd.read_excel(r'markerworldmap.xlsx')
     rotM = np.zeros(shape=(3,3))
 
@@ -107,13 +102,7 @@ class arucoPubSub:
         # Trot = np.dot(rotM,(translate+tvec).T)#+np.dot(rotM,tvec.T)
         Trot = translate.T + np.dot(rotM,tvec.T)
         Trot = np.array(Trot).T
-
-        RrotM, _ = cv2.Rodrigues(rvec)
-
-        #rotM = rotM.T
-        #Rrot = np.dot(rotM,rvec.T)
-        Rrot = np.dot(rotM,RrotM)
-        Rrot, _= cv2.Rodrigues(Rrot)
+        Rrot = np.dot(rotM,rvec.T)
         Rrot = np.array(Rrot).T
         return np.array([Trot,Rrot])
     
@@ -129,8 +118,7 @@ class arucoPubSub:
 
 
     def __init__(self):
-        
-        self.landmarkpublisher = rospy.Publisher("/LandmarkPose", Pose, queue_size = 1) 
+
         self.image_pub = rospy.Publisher("/processed_image/image_raw/compressed", CompressedImage, queue_size = 1,)
         self.pose_pub = rospy.Publisher("/visualPose", Pose, queue_size = 1)
 
@@ -212,30 +200,9 @@ class arucoPubSub:
                 mapTvectors=[]
                 mapRvectors=[]
 
-                ######
-
-
-
-                landmarkglobalx = self.getCoordArray(markerIds[i])[0][0]
-                landmarkglobaly = self.getCoordArray(markerIds[i])[0][1]
-                #print(str(landmarkglobalx) +" "+str(landmarkglobaly) )
-
-
-
-                landmarkglobalxy = Pose()
-
-                landmarkglobalxy.position.x = landmarkglobalx
-                landmarkglobalxy.position.y = landmarkglobaly
-
-                ######
-
-                self.landmarkpublisher.publish(landmarkglobalxy)
-
                 for k in range(len(tvecs)):
                     invTvecs.append(self.invT(tvecs[k],rvecs[k]))
                     invRvecs.append(self.invR(tvecs[k],rvecs[k]))
-
-                    #print(invRvecs)
 
                 idatax.append(self.vectorTransform(markerIds[i],invTvecs[i],invRvecs[i])[0][0][0])
                 idatay.append(self.vectorTransform(markerIds[i],invTvecs[i],invRvecs[i])[0][0][1])
@@ -282,68 +249,34 @@ class arucoPubSub:
 
             p.position.x = idataXavg
             p.position.y = idataYavg    
-            p.position.z = idataZavg-0.18
+            p.position.z = idataZavg
 
-            
+            normAxes = math.sqrt(idataRXavg**2+idataRYavg**2+idataRZavg**2)
 
-            idatarot = np.array([idataRXavg,idataRYavg,idataRZavg])
-            QuatMat, _ = cv2.Rodrigues(idatarot)
-            #RotMat = np.matrix(' 0 -1 0; 0 0 -1 ; 1 0 0')
-            RotMat = np.matrix(' 0 1 0; 0 0 -1 ; -1 0 0')
-            Mulmat = np.dot(QuatMat,RotMat)
-
-            rotV,_ = np.array(cv2.Rodrigues(Mulmat),dtype = object)
-            rotV = rotV.T
-
-            #print(rotV)
-            
-            
-
-
-
-            normAxes = math.sqrt(rotV[0][0]**2+rotV[0][1]**2+rotV[0][2]**2)
             sinadiv2 = math.sin(normAxes/2)
 
-            normRX = rotV[0][0]/normAxes
-            normRY = rotV[0][1]/normAxes
-            normRZ = rotV[0][2]/normAxes 
+            normRX = -idataRXavg/normAxes
+            normRY = -idataRYavg/normAxes
+            normRZ = idataRZavg/normAxes 
 
             QuatORX = normRX*sinadiv2   
             QuatORY = normRY*sinadiv2 
             QuatORZ = normRZ*sinadiv2 
             QuatORW = math.cos(normAxes/2)
-           
-            # p.orientation.x =  QuatORZ
-            # p.orientation.y =  QuatORW
-            # p.orientation.z =  QuatORY
-            # p.orientation.w =  QuatORX
 
-            p.orientation.x =  QuatORY 
-            p.orientation.y =  QuatORX
-            p.orientation.z =  QuatORW
-            p.orientation.w = -QuatORZ
-
-
-            #print("position: "+str([round(idataXavg,4),round(idataYavg,4),round(idataZavg-0.18,4)]),"\torientation(xyzw): "+str([round(QuatORY,4),round(QuatORX,4),round(QuatORW,4),round(-QuatORZ,4)]))
-           
-
-            # if(QuatORW>0):
-            #     p.orientation.x =  QuatORX
-            #     p.orientation.y =  QuatORY
-            #     p.orientation.z =  QuatORZ
-            #     p.orientation.w =  QuatORW
-            # else:
-            #     p.orientation.x = -QuatORX
-            #     p.orientation.y = -QuatORY
-            #     p.orientation.z = -QuatORZ
-            #     p.orientation.w =  QuatORW
+            if(QuatORY<0):
+                p.orientation.x =  QuatORZ
+                p.orientation.y =  QuatORW
+                p.orientation.z =  QuatORY
+                p.orientation.w =  QuatORX
+            else:
+                p.orientation.x = -QuatORZ
+                p.orientation.y = -QuatORW
+                p.orientation.z = -QuatORY
+                p.orientation.w = -QuatORX
             
 
             self.pose_pub.publish(p)
-
-
-
-            print("position: "+str(["{:.4f}".format(idataXavg),"{:.4f}".format(idataYavg),"{:.4f}".format(idataZavg-0.18)]),"\torientation(xyzw): "+str(["{:.4f}".format(QuatORY),"{:.4f}".format(QuatORX),"{:.4f}".format(QuatORW),"{:.4f}".format(-QuatORZ)]))
 
 
 
@@ -372,7 +305,6 @@ class arucoPubSub:
 def main(args):
     
     rospy.init_node('visualGlobalEstimation', anonymous = False)
-    
     ic = arucoPubSub()
 
     try:

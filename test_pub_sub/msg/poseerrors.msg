@@ -1,0 +1,2 @@
+float64 translateerror
+float64 quaternionerror
